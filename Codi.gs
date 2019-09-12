@@ -1,21 +1,27 @@
 function doGet(e) {
+  var document = e.parameter.document;
   var from = e.parameter.from;
   var query = e.parameter.query; 
   var where = e.parameter.where;
   var is = e.parameter.is;
   var order = e.parameter.order;
   var values = e.parameter.values;   
-  var response = getData(from,query,where,is,order,values); 
+  var response = getData(document,from,query,where,is,order,values); 
   return ContentService
-  .createTextOutput(response)
-  .setMimeType(ContentService.MimeType.JSON);  
+    .createTextOutput(response)
+    .setMimeType(ContentService.MimeType.JSON);  
 }
-
-function getData(from,query,where,is,order,values){
-  if(from == undefined) {
-    var sheet = SpreadsheetApp.getActive().getSheets()[0];
+ 
+function getData(document,from,query,where,is,order,values){
+  if(document == undefined) {
+    var doc = SpreadsheetApp.getActive();
   } else {
-    var sheet = SpreadsheetApp.getActive().getSheetByName(from);
+    var doc = SpreadsheetApp.openById(document);
+  }  
+  if(from == undefined) {
+    var sheet = doc.getSheets()[0];
+  } else {
+    var sheet = doc.getSheetByName(from);
   }
   var numColumns = sheet.getLastColumn();
   var fields = sheet.getRange(1,1,1,numColumns).getValues();
