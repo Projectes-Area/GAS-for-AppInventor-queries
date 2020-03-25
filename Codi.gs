@@ -1,45 +1,25 @@
 function doGet(e) {
-  var document = e.parameter.document;
-  var from = e.parameter.from;
-  var query = e.parameter.query; 
-  var where = e.parameter.where;
-  var is = e.parameter.is;
-  var order = e.parameter.order;
-  var values = e.parameter.values;   
-  var response = getData(document,from,query,where,is,order,values); 
-  return ContentService
-    .createTextOutput(response)
-    .setMimeType(ContentService.MimeType.JSON);  
+  var p = e.parameter;
+  var response = getData(p.document,p.from,p.query,p.where,p.is,p.isnot,p.and,p.or,p.equal,p.order,p.values); 
+  return ContentService.createTextOutput(response).setMimeType(ContentService.MimeType.JSON);  
 }
  
-function getData(document,from,query,where,is,order,values){
-  if(document == undefined) {
-    var doc = SpreadsheetApp.getActive();
-  } else {
-    var doc = SpreadsheetApp.openById(document);
-  }  
-  if(from == undefined) {
-    var sheet = doc.getSheets()[0];
-  } else {
-    var sheet = doc.getSheetByName(from);
-  }
+function getData(document,from,query,where,is,isnot,and,or,equal,order,values){
+  if(document == undefined) { var doc = SpreadsheetApp.getActive(); } 
+  else { var doc = SpreadsheetApp.openById(document); }  
+  if(from == undefined) { var sheet = doc.getSheets()[0]; }
+  else { var sheet = doc.getSheetByName(from); }
   var numColumns = sheet.getLastColumn();
   var fields = sheet.getRange(1,1,1,numColumns).getValues();
   var data = sheet.getRange(2,1,sheet.getLastRow()-1,numColumns).getValues();
-  var numField; 
-  var numOrder;
+  var numField1,numField2,numOrder; 
   for(var i=0;i<fields[0].length;i++){
-    if(fields[0][i] == where){
-      numField = i;
-    }
-    if(fields[0][i] == order){
-      numOrder = i;
-    }
+    if(fields[0][i] == where){ numField1 = i; }
+    if(fields[0][i] == and || fields[0][i] == or){ numField2 = i; }
+    if(fields[0][i] == order){ numOrder = i; }
   }
   var response;
-  if(query == "count"){
-    response = data.length;
-  }
+  if(query == "count"){ response = data.length; }
   if(query == "insert"){
     sheet.appendRow(values.split('$$'));
     response = "ok";
@@ -48,37 +28,32 @@ function getData(document,from,query,where,is,order,values){
     if(query == "select" & numOrder != undefined){
       data = data.sort(function(a,b){
         var type = typeof a[numOrder];
-        if(type === "string") {
-          return a[numOrder].localeCompare(b[numOrder]);
-        }
-        if(type === "number"){
-          return b[numOrder]-a[numOrder];
-        }
-        if(type === "object"){
-          return a[numOrder]-b[numOrder];
-        }
+        if(type === "string") { return a[numOrder].localeCompare(b[numOrder]); }
+        if(type === "number"){ return b[numOrder]-a[numOrder]; }
+        if(type === "object"){ return a[numOrder]-b[numOrder]; }
       });
     }
     var count = 0;
     response = '[';   
     for(var i=0;i<data.length;i++){
-      if (data[i][numField] == is){
+      var first = false;
+      if(is != undefined && data[i][numField1] == is) { first = true; }
+      else if(isnot != undefined && data[i][numField1] != isnot) { first = true; }
+      var getRow = false;
+      if (and == undefined && or == undefined && first) { getRow = true; }
+      else if (and != undefined && first && data[i][numField2] == equal) { getRow = true; }
+      else if (or != undefined && (first || data[i][numField2] == equal)) { getRow = true; }    
+      if (getRow){
         if(query == "select"){
-          if(count>0) {
-            response+= ',';
-          }
+          if(count>0) { response+= ','; }
           response+='{';
             for(var j=0;j<fields[0].length;j++) {
             response+='"'+fields[0][j]+'":"'+data[i][j]+'"';
-            if(j<fields[0].length-1) {
-              response+= ',';
-            }        
+            if(j<fields[0].length-1) { response+= ','; }        
           }
           response+='}';  
         }
-        if(query == "delete"){
-          sheet.deleteRow(i+2-count);
-        }
+        if(query == "delete"){ sheet.deleteRow(i+2-count); }
         if(query == "update"){
           var regIns = values.split('$$');
           var regReplace = [];
@@ -95,17 +70,13 @@ function getData(document,from,query,where,is,order,values){
       }
     }
     response+= ']';
-    if(query == "delete" || query == "update"){
-      response = count;
-    }
+    if(query == "delete" || query == "update"){ response = count; }
   }
   if(query == "fields"){
     response = '[{';
     for(var i=0;i<fields[0].length;i++){
       response+= '"'+i+'":"'+fields[0][i]+'"';
-       if(i<fields[0].length-1) {
-        response+= ',';
-      }                      
+       if(i<fields[0].length-1) { response+= ','; }                      
     } 
     response+= '}]';
   }
