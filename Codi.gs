@@ -37,12 +37,13 @@ function getData(document,from,query,where,is,isnot,and,or,equal,order,values){
     response = '[';   
     for(var i=0;i<data.length;i++){
       var first = false;
-      if(is != undefined && data[i][numField1] == is) { first = true; }
+      if(numField1 == undefined) { first = true; }
+      else if(is != undefined && data[i][numField1] == is) { first = true; }
       else if(isnot != undefined && data[i][numField1] != isnot) { first = true; }
       var getRow = false;
-      if (and == undefined && or == undefined && first) { getRow = true; }
-      else if (and != undefined && first && data[i][numField2] == equal) { getRow = true; }
-      else if (or != undefined && (first || data[i][numField2] == equal)) { getRow = true; }    
+      if(and == undefined && or == undefined && first) { getRow = true; }
+      else if(and != undefined && first && data[i][numField2] == equal) { getRow = true; }
+      else if(or != undefined && (first || data[i][numField2] == equal)) { getRow = true; }    
       if (getRow){
         if(query == "select"){
           if(count>0) { response+= ','; }
