@@ -11,7 +11,9 @@ function getData(document,from,query,where,is,isnot,and,or,equal,order,values){
   else { var sheet = doc.getSheetByName(from); }
   var numColumns = sheet.getLastColumn();
   var fields = sheet.getRange(1,1,1,numColumns).getValues();
-  var data = sheet.getRange(2,1,sheet.getLastRow()-1,numColumns).getValues();
+  var data = [];
+  var numRegs = sheet.getLastRow() - 1;
+  if(numRegs > 0){ data = sheet.getRange(2,1,numRegs,numColumns).getValues(); }
   var numField1,numField2,numOrder; 
   for(var i=0;i<fields[0].length;i++){
     if(fields[0][i] == where){ numField1 = i; }
