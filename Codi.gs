@@ -50,7 +50,10 @@ function getData(document,from,query,where,is,isnot,and,or,equal,order,values){
         if(query == "select"){
           if(count>0) { response+= ','; }
           response+='{';
-            for(var j=0;j<fields[0].length;j++) {
+          for(var j=0;j<fields[0].length;j++) {
+            if(data[i][j] instanceof Date) {
+              data[i][j] = data[i][j].toLocaleDateString("ca-ES");
+            } 
             response+='"'+fields[0][j]+'":"'+data[i][j]+'"';
             if(j<fields[0].length-1) { response+= ','; }        
           }
